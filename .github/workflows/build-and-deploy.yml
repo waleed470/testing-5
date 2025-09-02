@@ -4,17 +4,11 @@ on:
   push:
     branches: [f1, f2, f3, f4, f5, f6, f7, f8, f9, dev]
 
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  build:
-    name: Build and Deploy
+  deploy_part1:
+    name: Deploy Part 1
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        serverless: [part1, part2, part3]
+    if: github.ref != 'refs/heads/dev'
     
     steps:
       - name: Checkout
@@ -24,11 +18,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          # cache: 'npm'  # COMMENTED OUT TO AVOID PACKAGE-LOCK ERROR
 
       - name: Install Dependencies
         run: |
-          # Create package.json if not exists
           if [ ! -f package.json ]; then
             echo '{
               "name": "ibs-multi-service-app",
@@ -43,16 +35,9 @@ jobs:
               }
             }' > package.json
           fi
-          
-          # Install dependencies without package-lock
           npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
           npm install --no-package-lock -g serverless@3.35.0
-          
-          # Create fake package-lock to avoid errors
           echo '{"name": "ibs-app", "version": "1.0.0", "lockfileVersion": 3}' > package-lock.json
-
-      - name: Install Serverless
-        run: npm install -g serverless
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -75,17 +60,84 @@ jobs:
           fi
           echo "Using stage: $STAGE"
 
-      - name: Copy Serverless Config
-        run: cp serverless-${{ matrix.serverless }}.yml serverless.yml
-
-      - name: Deploy Part ${{ matrix.serverless }}
-        run: sls deploy --stage $STAGE --verbose
+      - name: Deploy Part 1
+        run: sls deploy --stage $STAGE --verbose -c serverless-part1.yml
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}  # ADDED DB_USERNAME
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
 
-      - name: Sleep between parts
-        if: matrix.serverless == 'part1' || matrix.serverless == 'part2'
-        run: sleep 30
+  deploy_part2:
+    name: Deploy Part 2
+    runs-on: ubuntu-latest
+    needs: deploy_part1  # PART 1 KE BAAD HI RUN HOGA
+    if: github.ref != 'refs/heads/dev'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: |
+          npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
+          npm install --no-package-lock -g serverless@3.35.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Extract Branch Name
+        run: |
+          branch=${GITHUB_REF#refs/heads/}
+          if [[ "$branch" =~ ^f[0-9]+$ ]]; then
+            echo "STAGE=feature${branch#f}" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy Part 2
+        run: sls deploy --stage $STAGE --verbose -c serverless-part2.yml
+
+  deploy_part3:
+    name: Deploy Part 3
+    runs-on: ubuntu-latest
+    needs: deploy_part2  # PART 2 KE BAAD HI RUN HOGA
+    if: github.ref != 'refs/heads/dev'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: |
+          npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
+          npm install --no-package-lock -g serverless@3.35.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Extract Branch Name
+        run: |
+          branch=${GITHUB_REF#refs/heads/}
+          if [[ "$branch" =~ ^f[0-9]+$ ]]; then
+            echo "STAGE=feature${branch#f}" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy Part 3
+        run: sls deploy --stage $STAGE --verbose -c serverless-part3.yml
