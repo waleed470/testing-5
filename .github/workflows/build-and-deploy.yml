@@ -24,14 +24,35 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          # cache: 'npm'  # COMMENT THIS LINE
+          # cache: 'npm'  # COMMENTED OUT TO AVOID PACKAGE-LOCK ERROR
 
       - name: Install Dependencies
         run: |
-          npm init -y --scope=ibs-app
+          # Create package.json if not exists
+          if [ ! -f package.json ]; then
+            echo '{
+              "name": "ibs-multi-service-app",
+              "version": "1.0.0",
+              "description": "Multi-part serverless application",
+              "dependencies": {
+                "pg": "^8.11.3",
+                "aws-sdk": "^2.1494.0"
+              },
+              "devDependencies": {
+                "serverless": "^3.35.0"
+              }
+            }' > package.json
+          fi
+          
+          # Install dependencies without package-lock
           npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
           npm install --no-package-lock -g serverless@3.35.0
+          
+          # Create fake package-lock to avoid errors
           echo '{"name": "ibs-app", "version": "1.0.0", "lockfileVersion": 3}' > package-lock.json
+
+      - name: Install Serverless
+        run: npm install -g serverless
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -63,3 +84,8 @@ jobs:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}  # ADDED DB_USERNAME
+
+      - name: Sleep between parts
+        if: matrix.serverless == 'part1' || matrix.serverless == 'part2'
+        run: sleep 30

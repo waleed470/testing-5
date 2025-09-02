@@ -5,22 +5,11 @@ provider:
   runtime: nodejs18.x
   region: us-east-1
   environment:
-    STAGE: ${opt:stage, 'dev'}
+    STAGE: ${env:STAGE, 'dev'}
     DB_HOST: ${env:DB_HOST}
     DB_NAME: ${env:DB_NAME}
-
-resources:
-  Resources:
-    MyRDSInstance:
-      Type: AWS::RDS::DBInstance
-      Properties:
-        DBInstanceIdentifier: ibs-${env:STAGE, 'dev'}-db
-        Engine: postgres
-        DBInstanceClass: db.t3.micro
-        MasterUsername: waleed
-        MasterUserPassword: ${env:DB_PASSWORD}
-        AllocatedStorage: 20
-        PubliclyAccessible: true
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_USERNAME: ${env:DB_USERNAME}
 
 functions:
   apiHandler:
