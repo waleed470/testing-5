@@ -4,7 +4,6 @@ on:
   push:
     branches: [f1, f2, f3, f4, f5, f6, f7, f8, f9, dev]
 
-# YEH CONCURRENCY ADD KAREN: Pure workflow ke liye
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
@@ -29,8 +28,9 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install
-          npm audit fix
+          npm init -y --scope=ibs-app
+          npm install pg@^8.11.3 aws-sdk@^2.1494.0
+          npm install -g serverless@3.35.0
 
       - name: Install Serverless
         run: npm install -g serverless
