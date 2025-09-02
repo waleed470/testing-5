@@ -14,7 +14,7 @@ resources:
     MyS3Bucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ibs-${self:provider.stage}-bucket
+        BucketName: ibs-${opt:provider.stage}-bucket
 
     MySQSQueue:
       Type: AWS::SQS::Queue

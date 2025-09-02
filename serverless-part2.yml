@@ -14,7 +14,7 @@ resources:
     MySNSTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: ibs-${self:provider.stage}-topic
+        TopicName: ibs-${opt:provider.stage}-topic
 
 functions:
   processData:
