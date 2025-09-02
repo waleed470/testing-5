@@ -37,7 +37,6 @@ jobs:
           fi
           npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
           npm install --no-package-lock -g serverless@3.35.0
-          echo '{"name": "ibs-app", "version": "1.0.0", "lockfileVersion": 3}' > package-lock.json
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -68,11 +67,6 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
 
-      - name: Save Stage for Next Jobs
-        run: |
-          echo "STAGE=$STAGE" >> $GITHUB_ENV
-          echo "SAVED_STAGE=$STAGE" >> $GITHUB_OUTPUT
-
   deploy_part2:
     name: Deploy Part 2
     runs-on: ubuntu-latest
@@ -100,10 +94,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Get Stage from Part1
+      - name: Extract Branch Name Again
+        id: extract_branch_again
         run: |
-          echo "STAGE=${{ needs.deploy_part1.outputs.SAVED_STAGE }}" >> $GITHUB_ENV
-          echo "Using stage: ${{ needs.deploy_part1.outputs.SAVED_STAGE }}"
+          branch=${GITHUB_REF#refs/heads/}
+          echo "Branch is $branch"
+          if [[ "$branch" == "dev" ]]; then
+            echo "STAGE=develop" >> $GITHUB_ENV
+          elif [[ "$branch" =~ ^f[0-9]+$ ]]; then
+            echo "STAGE=feature${branch#f}" >> $GITHUB_ENV
+          else
+            echo "STAGE=$branch" >> $GITHUB_ENV
+          fi
+          echo "Using stage: $STAGE"
 
       - name: Deploy Part 2
         run: sls deploy --stage $STAGE --verbose -c serverless-part2.yml
@@ -135,10 +138,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Get Stage from Part1
+      - name: Extract Branch Name Again
+        id: extract_branch_again
         run: |
-          echo "STAGE=${{ needs.deploy_part1.outputs.SAVED_STAGE }}" >> $GITHUB_ENV
-          echo "Using stage: ${{ needs.deploy_part1.outputs.SAVED_STAGE }}"
+          branch=${GITHUB_REF#refs/heads/}
+          echo "Branch is $branch"
+          if [[ "$branch" == "dev" ]]; then
+            echo "STAGE=develop" >> $GITHUB_ENV
+          elif [[ "$branch" =~ ^f[0-9]+$ ]]; then
+            echo "STAGE=feature${branch#f}" >> $GITHUB_ENV
+          else
+            echo "STAGE=$branch" >> $GITHUB_ENV
+          fi
+          echo "Using stage: $STAGE"
 
       - name: Deploy Part 3
         run: sls deploy --stage $STAGE --verbose -c serverless-part3.yml
