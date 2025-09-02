@@ -24,16 +24,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
+          # cache: 'npm'  # COMMENT THIS LINE
 
       - name: Install Dependencies
         run: |
           npm init -y --scope=ibs-app
-          npm install pg@^8.11.3 aws-sdk@^2.1494.0
-          npm install -g serverless@3.35.0
-
-      - name: Install Serverless
-        run: npm install -g serverless
+          npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
+          npm install --no-package-lock -g serverless@3.35.0
+          echo '{"name": "ibs-app", "version": "1.0.0", "lockfileVersion": 3}' > package-lock.json
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
