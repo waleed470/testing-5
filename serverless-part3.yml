@@ -14,12 +14,12 @@ resources:
     MyS3Bucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ibs-${opt:provider.stage}-bucket
+        BucketName: ibs-${env:STAGE, 'dev'}-bucket
 
     MySQSQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ibs-${opt:provider.stage}-queue
+        QueueName: ibs-${env:STAGE, 'dev'}-queue
 
 functions:
   queueHandler:

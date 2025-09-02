@@ -1,4 +1,3 @@
-# serverless-part2.yml
 service: ibs-app-part2
 
 provider:
@@ -6,7 +5,7 @@ provider:
   runtime: nodejs18.x
   region: us-east-1
   environment:
-    STAGE: ${opt:stage, 'dev'}
+    STAGE: ${env:STAGE, 'dev'}
     SNS_TOPIC_ARN: { Ref: MySNSTopic }
 
 resources:
@@ -14,7 +13,7 @@ resources:
     MySNSTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: ibs-${opt:provider.stage}-topic
+        TopicName: ibs-${env:STAGE, 'dev'}-topic
 
 functions:
   processData:

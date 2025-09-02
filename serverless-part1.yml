@@ -14,7 +14,7 @@ resources:
     MyRDSInstance:
       Type: AWS::RDS::DBInstance
       Properties:
-        DBInstanceIdentifier: ibs-${opt:stage, 'dev'}-db
+        DBInstanceIdentifier: ibs-${env:STAGE, 'dev'}-db
         Engine: postgres
         DBInstanceClass: db.t3.micro
         MasterUsername: admin
