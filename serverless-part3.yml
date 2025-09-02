@@ -19,7 +19,7 @@ resources:
     MySQSQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ibs-${self:provider.stage}-queue
+        QueueName: ibs-${opt:provider.stage}-queue
 
 functions:
   queueHandler:
