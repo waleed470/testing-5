@@ -1,0 +1,33 @@
+# serverless-part1.yml
+service: ibs-app-part1
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    STAGE: ${opt:stage, 'dev'}
+    DB_HOST: ${env:DB_HOST}
+    DB_NAME: ${env:DB_NAME}
+
+resources:
+  Resources:
+    MyRDSInstance:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        DBInstanceIdentifier: ibs-${self:provider.stage}-db
+        Engine: postgres
+        DBInstanceClass: db.t3.micro
+        MasterUsername: admin
+        MasterUserPassword: ${env:DB_PASSWORD}
+        AllocatedStorage: 20
+        PubliclyAccessible: true
+
+functions:
+  apiHandler:
+    handler: handlers/api.handler
+    events:
+      - http:
+          path: /data
+          method: post
+          cors: true

@@ -1,0 +1,29 @@
+# serverless-part3.yml
+service: ibs-app-part3
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    STAGE: ${opt:stage, 'dev'}
+    BUCKET_NAME: { Ref: MyS3Bucket }
+
+resources:
+  Resources:
+    MyS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ibs-${self:provider.stage}-bucket
+
+    MySQSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ibs-${self:provider.stage}-queue
+
+functions:
+  queueHandler:
+    handler: handlers/queue.handler
+    events:
+      - sqs:
+          arn: { Fn::GetAtt: [MySQSQueue, Arn] }

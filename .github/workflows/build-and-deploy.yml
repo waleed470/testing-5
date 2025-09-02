@@ -1,0 +1,67 @@
+name: Serverless Build and Deploy
+
+on:
+  push:
+    branches: [f1, f2, f3, f4, f5, f6, f7, f8, f9, dev]
+
+# YEH CONCURRENCY ADD KAREN: Pure workflow ke liye
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        serverless: [part1, part2, part3]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm install
+          npm audit fix
+
+      - name: Install Serverless
+        run: npm install -g serverless
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Extract Branch Name
+        id: extract_branch
+        run: |
+          branch=${GITHUB_REF#refs/heads/}
+          echo "Branch is $branch"
+          if [[ "$branch" == "dev" ]]; then
+            echo "STAGE=develop" >> $GITHUB_ENV
+          elif [[ "$branch" =~ ^f[0-9]+$ ]]; then
+            echo "STAGE=feature${branch#f}" >> $GITHUB_ENV
+          else
+            echo "STAGE=$branch" >> $GITHUB_ENV
+          fi
+          echo "Using stage: $STAGE"
+
+      - name: Copy Serverless Config
+        run: cp serverless-${{ matrix.serverless }}.yml serverless.yml
+
+      - name: Deploy Part ${{ matrix.serverless }}
+        run: sls deploy --stage $STAGE --verbose
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}

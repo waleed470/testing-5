@@ -1,0 +1,34 @@
+# name: Auto Merge Branch2
+
+on:
+  push:
+    branches:
+      - dev
+
+# YEH CONCURRENCY ADD KAREN: Har branch merge ke liye
+concurrency:
+  group: merge-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  auto_back_merge_dev:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        target: [f1, f2, f3, f4, f5, f6, f7, f8, f9]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Merge dev -> ${{ matrix.target }}
+        continue-on-error: true
+        uses: devmasx/merge-branch@master
+        with:
+          type: now
+          from_branch: dev
+          target_branch: ${{ matrix.target }}
+          message: Merge dev into ${{ matrix.target }}
+          github_token: ${{ secrets.GH_AUTO_MERGER }}
