@@ -13,10 +13,10 @@ resources:
     MySNSTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: ibs-app-${env:STAGE, 'dev'}-sns-topic  # CHANGED
+        TopicName: ibs-${env:STAGE, 'dev'}-sns-topic-${env:GITHUB_RUN_ID}
 
 functions:
   processData:
     handler: handlers/processor.handler
     events:
-      - sns: MySNSTopic
+    - sns: MySNSTopic
