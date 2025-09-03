@@ -12,8 +12,8 @@ resources:
   Resources:
     MySNSTopic:
       Type: AWS::SNS::Topic
-      Properties:
-        TopicName: ibs-app-${env:STAGE, 'dev'}-sns-topic  # CHANGED
+       #Properties:
+        #TopicName: ibs-${env:STAGE, 'dev'}-sns-topic-${env:GITHUB_REF_NAME}
 
 functions:
   processData:
