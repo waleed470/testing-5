@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         serverless: [part1, part2, part3]
-      max-parallel: 1   # ← sequential: part1 → part2 → part3
+      max-parallel: 1
 
     steps:
       - name: Checkout
@@ -27,29 +27,26 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Create package.json if not exists - FIXED SYNTAX
+          # Create package.json if not exists
           if [ ! -f package.json ]; then
-            cat > package.json << 'EOF'
-          {
-            "name": "ibs-multi-service-app",
-            "version": "1.0.0",
-            "description": "Multi-part serverless application",
-            "dependencies": {
-              "pg": "^8.11.3",
-              "aws-sdk": "^2.1494.0"
-            },
-            "devDependencies": {
-              "serverless": "^3.35.0"
-            }
-          }
-          EOF
+            echo '{
+              "name": "ibs-multi-service-app",
+              "version": "1.0.0",
+              "description": "Multi-part serverless application",
+              "dependencies": {
+                "pg": "^8.11.3",
+                "aws-sdk": "^2.1494.0"
+              },
+              "devDependencies": {
+                "serverless": "^3.35.0",
+                "serverless-prune-plugin": "^2.0.2"
+              }
+            }' > package.json
           fi
           
-          # Install dependencies
-          npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
-          npm install --no-package-lock -g serverless@3.35.0
-          
-          # Create fake package-lock to avoid errors
+          # Install dependencies including serverless globally
+          npm install --no-package-lock
+          npm install -g serverless@3.35.0
           echo '{"name": "ibs-app", "version": "1.0.0", "lockfileVersion": 3}' > package-lock.json
 
       - name: Configure AWS Credentials
@@ -75,12 +72,20 @@ jobs:
       - name: Deploy Part ${{ matrix.serverless }}
         run: |
           if [ "${{ matrix.serverless }}" = "part2" ]; then
-            sls deploy --stage "$STAGE-$GITHUB_RUN_ID" --verbose -c "serverless-part2.yml"
+            npx serverless deploy --stage "$STAGE-$GITHUB_RUN_ID" --verbose -c "serverless-part2.yml"
           else
-            sls deploy --stage "$STAGE" --verbose -c "serverless-${{ matrix.serverless }}.yml"
+            npx serverless deploy --stage "$STAGE" --verbose -c "serverless-${{ matrix.serverless }}.yml"
           fi
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
+
+      - name: Prune Old Versions
+        run: |
+          if [ "${{ matrix.serverless }}" = "part2" ]; then
+            npx serverless prune -n 3 --stage "$STAGE-$GITHUB_RUN_ID"
+          else
+            npx serverless prune -n 3 --stage "$STAGE"
+          fi
