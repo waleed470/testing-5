@@ -19,4 +19,4 @@ functions:
   processData:
     handler: handlers/processor.handler
     events:
-      - sns: MySNSTopic
+    - sns: MySNSTopic
