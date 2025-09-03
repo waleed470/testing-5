@@ -12,11 +12,11 @@ resources:
   Resources:
     MySNSTopic:
       Type: AWS::SNS::Topic
-      Properties:
-        TopicName: ibs-${env:STAGE, 'dev'}-sns-topic-${env:GITHUB_RUN_ID}
+      # Properties section COMPLETELY REMOVE KARDO
+      # Serverless automatically unique name generate karega
 
 functions:
   processData:
     handler: handlers/processor.handler
     events:
-    - sns: MySNSTopic
+      - sns: MySNSTopic
