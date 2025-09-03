@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         serverless: [part1, part2, part3]
-      max-parallel: 1   # ← sequential: part1 → part2 → part3
+      max-parallel: 1
 
     steps:
       - name: Checkout
@@ -27,30 +27,25 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Create package.json if not exists
+          # Create package.json if not exists (EOF ke bina)
           if [ ! -f package.json ]; then
-            cat > package.json << 'EOF'
-{
-  "name": "ibs-multi-service-app",
-  "version": "1.0.0",
-  "description": "Multi-part serverless application",
-  "dependencies": {
-    "pg": "^8.11.3",
-    "aws-sdk": "^2.1494.0"
-  },
-  "devDependencies": {
-    "serverless": "^3.35.0",
-    "serverless-prune-plugin": "^2.0.2"
-  }
-}
-EOF
+            echo '{
+              "name": "ibs-multi-service-app",
+              "version": "1.0.0",
+              "description": "Multi-part serverless application",
+              "dependencies": {
+                "pg": "^8.11.3",
+                "aws-sdk": "^2.1494.0"
+              },
+              "devDependencies": {
+                "serverless": "^3.35.0",
+                "serverless-prune-plugin": "^2.0.2"
+              }
+            }' > package.json
           fi
           
-          # Install dependencies with prune plugin
-          npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
-          npm install --no-package-lock -g serverless@3.35.0
-          npm install --no-package-lock serverless-prune-plugin
-          
+          # Install dependencies
+          npm install --no-package-lock
           echo '{"name": "ibs-app", "version": "1.0.0", "lockfileVersion": 3}' > package-lock.json
 
       - name: Configure AWS Credentials
