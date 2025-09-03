@@ -59,8 +59,13 @@ jobs:
           fi
           echo "Using stage: $STAGE"
 
-      - name: Deploy Part 1
-        run: sls deploy --stage $STAGE --verbose -c serverless-part1.yml
+      - name: Deploy Part ${{ matrix.serverless }}
+        run: |
+          if [ "${{ matrix.serverless }}" == "part2" ]; then
+          sls deploy --stage $STAGE-$GITHUB_RUN_ID --verbose -c serverless-part2.yml
+          else
+          sls deploy --stage $STAGE --verbose -c serverless-${{ matrix.serverless }}.yml
+          fi
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_NAME: ${{ secrets.DB_NAME }}
