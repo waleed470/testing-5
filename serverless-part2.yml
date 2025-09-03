@@ -6,17 +6,13 @@ provider:
   region: us-east-1
   environment:
     STAGE: ${env:STAGE, 'dev'}
-    SNS_TOPIC_ARN: { Ref: MySNSTopic }
-
-resources:
-  Resources:
-    MySNSTopic:
-      Type: AWS::SNS::Topic
-      # Properties section COMPLETELY REMOVE KARDO
-      # Serverless automatically unique name generate karega
 
 functions:
   processData:
     handler: handlers/processor.handler
+    # SNS event completely remove karo
     events:
-      - sns: MySNSTopic
+      - http:  # Simple HTTP endpoint bana do
+          path: /process
+          method: post
+          cors: true
