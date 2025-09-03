@@ -11,13 +11,13 @@ concurrency:
 
 jobs:
   sequential_merges:
-    name: Sequential Branch Merging
+    name: Merge to ${{ matrix.branch }}
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/dev'
     strategy:
       max-parallel: 1  # ✅ EK TIME PE SIRF EK BRANCH
       matrix:
-        branch: [f1, f2, f3, f4, f5, f6, f7, f8, f9]
+        branch: ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9']
     
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
           message: Merge dev into ${{ matrix.branch }}
           github_token: ${{ secrets.GH_AUTO_MERGER }}
 
-      - name: Wait for ${{ matrix.branch }} deployment to complete
+      - name: Wait for deployment
         run: |
           echo "Waiting for ${{ matrix.branch }} deployment to complete..."
           sleep 300  # 5 minutes wait
