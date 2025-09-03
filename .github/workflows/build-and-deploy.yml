@@ -1,4 +1,4 @@
-name: Serverless Build and Deploy
+name: Serverless Build and Deploy (Test with Prune)
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Create package.json if not exists - FIXED SYNTAX
+          # Create package.json if not exists
           if [ ! -f package.json ]; then
             cat > package.json << 'EOF'
           {
@@ -38,8 +38,9 @@ jobs:
               "pg": "^8.11.3",
               "aws-sdk": "^2.1494.0"
             },
-            "devDependencies": {
-              "serverless": "^3.35.0"
+            "devDependencies: {
+              "serverless": "^3.35.0",
+              "serverless-prune-plugin": "^2.0.2"
             }
           }
           EOF
@@ -48,6 +49,9 @@ jobs:
           # Install dependencies
           npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
           npm install --no-package-lock -g serverless@3.35.0
+          
+          # +++ PRUNE PLUGIN INSTALL KAREN +++
+          npm install --no-package-lock -g serverless-prune-plugin
           
           # Create fake package-lock to avoid errors
           echo '{"name": "ibs-app", "version": "1.0.0", "lockfileVersion": 3}' > package-lock.json
@@ -84,3 +88,9 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
+
+      # +++ PRUNE COMMAND - PART 1 & 3 KE LIYE +++
+      - name: Prune Old Versions (Part 1 & 3)
+        if: matrix.serverless != 'part2'
+        run: |
+          sls prune -n 3 --stage "$STAGE" -c "serverless-${{ matrix.serverless }}.yml"
