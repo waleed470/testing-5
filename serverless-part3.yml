@@ -27,3 +27,5 @@ functions:
     events:
       - sqs:
           arn: { Fn::GetAtt: [MySQSQueue, Arn] }
+plugins:
+  - serverless-prune-plugin
