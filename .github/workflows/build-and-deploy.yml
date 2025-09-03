@@ -1,4 +1,4 @@
-name: Serverless Build and Deploy (Test with Prune)
+name: Serverless Build and Deploy
 
 on:
   push:
@@ -30,30 +30,27 @@ jobs:
           # Create package.json if not exists
           if [ ! -f package.json ]; then
             cat > package.json << 'EOF'
-          {
-            "name": "ibs-multi-service-app",
-            "version": "1.0.0",
-            "description": "Multi-part serverless application",
-            "dependencies": {
-              "pg": "^8.11.3",
-              "aws-sdk": "^2.1494.0"
-            },
-            "devDependencies: {
-              "serverless": "^3.35.0",
-              "serverless-prune-plugin": "^2.0.2"
-            }
-          }
-          EOF
+{
+  "name": "ibs-multi-service-app",
+  "version": "1.0.0",
+  "description": "Multi-part serverless application",
+  "dependencies": {
+    "pg": "^8.11.3",
+    "aws-sdk": "^2.1494.0"
+  },
+  "devDependencies": {
+    "serverless": "^3.35.0",
+    "serverless-prune-plugin": "^2.0.2"
+  }
+}
+EOF
           fi
           
-          # Install dependencies
+          # Install dependencies with prune plugin
           npm install --no-package-lock pg@^8.11.3 aws-sdk@^2.1494.0
           npm install --no-package-lock -g serverless@3.35.0
+          npm install --no-package-lock serverless-prune-plugin
           
-          # +++ PRUNE PLUGIN INSTALL KAREN +++
-          npm install --no-package-lock -g serverless-prune-plugin
-          
-          # Create fake package-lock to avoid errors
           echo '{"name": "ibs-app", "version": "1.0.0", "lockfileVersion": 3}' > package-lock.json
 
       - name: Configure AWS Credentials
@@ -89,8 +86,10 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
 
-      # +++ PRUNE COMMAND - PART 1 & 3 KE LIYE +++
-      - name: Prune Old Versions (Part 1 & 3)
-        if: matrix.serverless != 'part2'
+      - name: Prune Old Versions
         run: |
-          sls prune -n 3 --stage "$STAGE" -c "serverless-${{ matrix.serverless }}.yml"
+          if [ "${{ matrix.serverless }}" = "part2" ]; then
+            sls prune -n 3 --stage "$STAGE-$GITHUB_RUN_ID"
+          else
+            sls prune -n 3 --stage "$STAGE"
+          fi
