@@ -13,7 +13,7 @@ resources:
     MySNSTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: ibs-${env:STAGE, 'dev'}-topic
+        TopicName: ibs-app-${env:STAGE, 'dev'}-sns-topic  # CHANGED
 
 functions:
   processData:
