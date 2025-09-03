@@ -19,3 +19,5 @@ functions:
           path: /data
           method: post
           cors: true
+plugins:
+  - serverless-prune-plugin
