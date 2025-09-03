@@ -1,12 +1,33 @@
-// handlers/processor.js
 const AWS = require('aws-sdk');
-const sns = new AWS.SNS();
 
 module.exports.handler = async (event) => {
-  await sns.publish({
-    Message: JSON.stringify(event),
-    TopicArn: process.env.SNS_TOPIC_ARN
-  }).promise();
-  
-  return { status: 'Message processed' };
-}
+  try {
+    // Simple processing without SNS
+    const data = JSON.parse(event.body || '{}');
+    
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({ 
+        status: 'Data processed successfully',
+        input: data,
+        environment: process.env.STAGE
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({ 
+        error: 'Processing failed',
+        message: error.message
+      })
+    };
+  }
+};
